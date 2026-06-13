@@ -10,8 +10,8 @@ A miniature conversational BI dashboard for NovaBite Consumer Goods, built as pa
 
 ### 1. Clone the repo
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+git clone https://github.com/arghadipmanna101/-revmind-fresher-fullstack-assignment-2026.git
+cd -revmind-fresher-fullstack-assignment-2026
 ```
 
 ### 2. Backend setup
