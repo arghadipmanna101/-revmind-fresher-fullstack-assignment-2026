@@ -27,20 +27,31 @@ async function seed() {
   const csv = fs.readFileSync(CSV_PATH, 'utf8');
   const rows = parse(csv, { columns: true, skip_empty_lines: true });
 
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO sales VALUES (
-      @transaction_id, @date, @month, @quarter,
-      @sku, @product_name, @category, @subcategory,
-      @region, @channel, @sales_rep,
-      @units_sold, @unit_price_usd, @gross_revenue_usd,
-      @discount_pct, @net_revenue_usd, @cogs_usd, @gross_profit_usd
-    )
-  `);
-
   for (const row of rows) {
-    stmt.run(row);
+    db.run(
+      `INSERT OR IGNORE INTO sales VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        row.transaction_id,
+        row.date,
+        row.month,
+        row.quarter,
+        row.sku,
+        row.product_name,
+        row.category,
+        row.subcategory,
+        row.region,
+        row.channel,
+        row.sales_rep,
+        parseFloat(row.units_sold),
+        parseFloat(row.unit_price_usd),
+        parseFloat(row.gross_revenue_usd),
+        parseFloat(row.discount_pct),
+        parseFloat(row.net_revenue_usd),
+        parseFloat(row.cogs_usd),
+        parseFloat(row.gross_profit_usd)
+      ]
+    );
   }
-  stmt.free();
 
   const data = db.export();
   fs.writeFileSync(DB_PATH, Buffer.from(data));
