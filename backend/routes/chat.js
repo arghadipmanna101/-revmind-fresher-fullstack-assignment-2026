@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, execRows } = require('../db');
-const Anthropic = require('@anthropic-ai/sdk');
+const Groq = require('groq-sdk');
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 async function buildContext() {
   const db = await getDb();
@@ -82,23 +84,34 @@ router.post('/', async (req, res) => {
 
   try {
     const context = await buildContext();
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: `You are a business intelligence assistant for NovaBite Consumer Goods.
+
+const prompt = `
+You are a business intelligence assistant for NovaBite Consumer Goods.
 Answer the sales manager's question using ONLY the data provided below.
 Be concise, specific, and always include numbers.
 If the data is insufficient, say so clearly.
 
 ${context}
 
-Sales Manager's Question: ${question}`
-      }]
-    });
+Sales Manager's Question: ${question}
+`;
 
-    res.json({ success: true, answer: message.content[0].text });
+const completion = await groq.chat.completions.create({
+  messages: [
+    {
+      role: "user",
+      content: prompt
+    }
+  ],
+  model: "llama-3.3-70b-versatile"
+});
+
+const answer = completion.choices[0].message.content;
+
+res.json({
+  success: true,
+  answer
+});
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'LLM request failed' });
