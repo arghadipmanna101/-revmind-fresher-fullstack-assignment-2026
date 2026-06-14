@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { postChat } from '../api'
 
 const EXAMPLES = [
   'Which region had the highest net revenue in Q1 2024?',
@@ -23,12 +22,45 @@ export default function Chat() {
     setLoading(true)
 
     try {
-      const res = await postChat(text)
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', text: res.data.answer },
-      ])
-    } catch {
+      const response = await fetch('http://localhost:3001/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: text }),
+      })
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let answerText = ''
+
+      setMessages((prev) => [...prev, { role: 'assistant', text: '' }])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') break
+            try {
+              const parsed = JSON.parse(data)
+              // eslint-disable-next-line react-hooks/immutability
+              answerText += parsed.text
+              setMessages((prev) => {
+                const updated = [...prev]
+                updated[updated.length - 1] = { role: 'assistant', text: answerText }
+                return updated
+              })
+            } catch (e) {
+              // ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', text: 'Error: could not get a response.' },
