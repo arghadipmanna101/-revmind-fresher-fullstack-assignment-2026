@@ -22,7 +22,7 @@ cp ../.env.example .env
 npm install
 node server.js
 ```
-Backend runs on http://localhost:3001
+Backend runs on http://localhost:3001  
 The database is seeded automatically on first run.
 
 ### 3. Frontend setup
@@ -42,13 +42,17 @@ Chosen because: Groq offers a generous free tier with no credit card required, e
 ## Prompt Design for /api/chat
 The prompt builds a structured text summary from live SQL queries run against the SQLite database. The context includes: net revenue by region, revenue by channel, category margins, sales rep rankings (all-time and 2025), quarterly breakdowns by region, and top product per region. This aggregated context is injected into the prompt alongside the user's question. The model is instructed to answer using only the provided data and always include numbers. This approach avoids hallucination while keeping token usage and latency low.
 
-## What I Would Improve With More Time
-- Streaming LLM responses with typewriter effect in the UI
-- Multi-turn chat with conversation history
-- Unit tests on seed script and aggregation queries
+## Bonus Features Implemented
+- Streaming LLM responses with typewriter effect in the chat UI
+- Unit tests on all API endpoints (Jest + Supertest)
+- Second chart: Revenue by Category bar chart on the Dashboard
 - Docker Compose for one-command startup
-- A second chart showing revenue by category or region breakdown
+
+## What I Would Improve With More Time
+- Multi-turn chat with conversation history
 - Better mobile responsiveness
+- More granular SQL context for edge-case questions
+- Seed script unit tests
 
 ## Tradeoffs / Shortcuts
 - **SQLite instead of Postgres**: fine for 1,000 rows and local dev, not production-scale
