@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
   try {
     const context = await buildContext();
 
-const prompt = `
+    const prompt = `
 You are a business intelligence assistant for NovaBite Consumer Goods.
 Answer the sales manager's question using ONLY the data provided below.
 Be concise, specific, and always include numbers.
@@ -96,22 +96,27 @@ ${context}
 Sales Manager's Question: ${question}
 `;
 
-const completion = await groq.chat.completions.create({
-  messages: [
-    {
-      role: "user",
-      content: prompt
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.3-70b-versatile',
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content || '';
+      if (text) {
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
     }
-  ],
-  model: "llama-3.3-70b-versatile"
-});
 
-const answer = completion.choices[0].message.content;
+    res.write('data: [DONE]\n\n');
+    res.end();
 
-res.json({
-  success: true,
-  answer
-});
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'LLM request failed' });
